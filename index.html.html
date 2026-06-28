@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reality Journey Log</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0F1117; color: #E8E6E0; min-height: 100vh; }
+.app { display: flex; min-height: 100vh; }
+.nav { width: 200px; flex-shrink: 0; background: #161820; border-right: 1px solid #2a2d3a; padding: 2rem 0; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; }
+.nav-logo { padding: 0 1.25rem 1.5rem; border-bottom: 1px solid #2a2d3a; margin-bottom: 1rem; }
+.nav-logo-title { font-size: 13px; font-weight: 600; color: #E8E6E0; letter-spacing: 0.02em; }
+.nav-logo-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
+.nav-section { padding: 0 0.75rem; margin-bottom: 0.5rem; }
+.nav-section-label { font-size: 10px; font-weight: 600; color: #4b5563; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 0.5rem 0.4rem; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; font-size: 13px; color: #9ca3af; cursor: pointer; border-radius: 6px; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { color: #E8E6E0; background: #1e2130; }
+.nav-item.active { color: #E8E6E0; background: #1e2130; font-weight: 500; }
+.nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: #C9873A; flex-shrink: 0; opacity: 0; }
+.nav-item.active .dot { opacity: 1; }
+.main { margin-left: 200px; flex: 1; padding: 2rem 2.5rem; max-width: 780px; }
+.constraint-bar { background: #161820; border: 1px solid #2a2d3a; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; }
+.constraint-label { font-size: 10px; font-weight: 600; color: #C9873A; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.constraint-text { font-size: 13px; color: #9ca3af; flex: 1; font-style: italic; }
+.constraint-text.set { color: #d1d5db; font-style: normal; }
+.constraint-btn { font-size: 12px; color: #C9873A; cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; }
+.constraint-btn:hover { text-decoration: underline; }
+.view-header { margin-bottom: 1.5rem; }
+.view-title { font-size: 22px; font-weight: 600; color: #E8E6E0; }
+.view-meta { font-size: 13px; color: #6b7280; margin-top: 4px; }
+.entry-form { background: #161820; border: 1px solid #2a2d3a; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+.form-q { margin-bottom: 1.25rem; }
+.q-label { font-size: 14px; font-weight: 500; color: #E8E6E0; margin-bottom: 4px; display: block; }
+.q-hint { font-size: 12px; color: #6b7280; margin-bottom: 6px; line-height: 1.5; }
+textarea { width: 100%; font-size: 14px; font-family: inherit; color: #E8E6E0; background: #0F1117; border: 1px solid #2a2d3a; border-radius: 6px; padding: 10px 12px; resize: vertical; min-height: 72px; line-height: 1.6; transition: border-color 0.15s; }
+textarea:focus { outline: none; border-color: #C9873A; }
+textarea::placeholder { color: #374151; }
+.form-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 1.25rem; }
+.btn-save { background: #C9873A; color: #0F1117; border: none; border-radius: 6px; padding: 9px 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.btn-save:hover { background: #b5763a; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.save-status { font-size: 12px; color: #6b7280; }
+.save-status.success { color: #10b981; }
+.save-status.error { color: #ef4444; }
+.ai-panel { background: #0F1117; border: 1px solid rgba(201,135,58,0.2); border-radius: 10px; padding: 1.25rem; margin-top: 1rem; }
+.ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
+.ai-label { font-size: 11px; font-weight: 600; color: #C9873A; letter-spacing: 0.06em; text-transform: uppercase; }
+.ai-body { font-size: 14px; color: #d1d5db; line-height: 1.75; white-space: pre-wrap; }
+.ai-loading { font-size: 14px; color: #6b7280; display: flex; align-items: center; gap: 8px; }
+.dots { display: inline-flex; gap: 3px; }
+.dots span { width: 4px; height: 4px; border-radius: 50%; background: #C9873A; animation: blink 1.2s ease-in-out infinite; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+.entries-section { margin-top: 2rem; }
+.entries-label { font-size: 11px; font-weight: 600; color: #4b5563; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1rem; }
+.entry-card { background: #161820; border: 1px solid #2a2d3a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+.entry-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.entry-date { font-size: 12px; color: #6b7280; }
+.entry-ai-toggle { font-size: 12px; color: #C9873A; cursor: pointer; background: none; border: none; padding: 0; }
+.entry-ai-toggle:hover { text-decoration: underline; }
+.entry-qa { margin-bottom: 0.6rem; }
+.entry-q { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.entry-a { font-size: 13px; color: #d1d5db; line-height: 1.6; }
+.empty { text-align: center; padding: 3rem 1rem; color: #4b5563; }
+.empty-icon { font-size: 36px; margin-bottom: 0.5rem; }
+.empty-text { font-size: 14px; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #161820; border: 1px solid #2a2d3a; border-radius: 12px; padding: 1.75rem; width: 90%; max-width: 440px; }
+.modal-title { font-size: 16px; font-weight: 600; color: #E8E6E0; margin-bottom: 6px; }
+.modal-sub { font-size: 13px; color: #9ca3af; margin-bottom: 1rem; line-height: 1.5; }
+.modal-input { width: 100%; font-size: 14px; font-family: inherit; color: #E8E6E0; background: #0F1117; border: 1px solid #2a2d3a; border-radius: 6px; padding: 10px 12px; }
+.modal-input:focus { outline: none; border-color: #C9873A; }
+.modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+.btn-modal-save { background: #C9873A; color: #0F1117; border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-modal-cancel { background: none; color: #9ca3af; border: 1px solid #2a2d3a; border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+.btn-modal-cancel:hover { color: #E8E6E0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-title">Reality Journey Log</div>
+      <div class="nav-logo-sub">RealityAssessment.com</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Cadence</div>
+      <button class="nav-item active" data-view="daily" onclick="switchView('daily')"><span class="dot"></span> Daily</button>
+      <button class="nav-item" data-view="weekly" onclick="switchView('weekly')"><span class="dot"></span> Weekly</button>
+      <button class="nav-item" data-view="monthly" onclick="switchView('monthly')"><span class="dot"></span> Monthly</button>
+      <button class="nav-item" data-view="quarterly" onclick="switchView('quarterly')"><span class="dot"></span> Quarterly</button>
+      <button class="nav-item" data-view="yearly" onclick="switchView('yearly')"><span class="dot"></span> Yearly</button>
+    </div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Primary constraint</div>
+    <div class="modal-sub">From your Reality Assessment — the one constraint holding you back most right now.</div>
+    <input class="modal-input" id="modal-input" placeholder="e.g. I avoid committing to things I might fail at" />
+    <div class="modal-actions">
+      <button class="btn-modal-save" onclick="saveConstraint()">Save</button>
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ANTHROPIC_KEY = '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';
+const AIRTABLE_TOKEN = 'patnt7P4TLNVOn149.f5792fd8dfb4faf74bb9092f4c401bb4ecdb0a1b0586daa126c57f011ad12d93';
+const AIRTABLE_BASE = 'appxZk8HCphR3v5pu';
+const AIRTABLE_TABLE = 'Journey Log';
+
+const VIEWS = {
+  daily: {
+    title: 'Daily log',
+    meta: '2-5 minutes · Observe, notice friction, lean forward',
+    questions: [
+      { id: 'q1', label: 'What did reality show me today?', hint: 'One grounded observation — something that actually happened, not an interpretation of it.' },
+      { id: 'q2', label: 'Where did I experience friction?', hint: 'Where did things resist? What slowed you down or did not go as expected?' },
+      { id: 'q3', label: 'What am I watching or adjusting tomorrow?', hint: 'One forward lean — an experiment, a behavior change, or something to pay attention to.' }
+    ],
+    aiPrompt: function(a, c) { return 'You are a reality calibration coach rooted in Theory of Constraints and Stoicism. The user\'s current primary constraint is: "' + (c || 'not yet set') + '"\n\nDaily log entry:\n- What reality showed me: ' + a.q1 + '\n- Where I experienced friction: ' + a.q2 + '\n- What I\'m watching/adjusting tomorrow: ' + a.q3 + '\n\nYour job:\n1. Identify whether this entry reveals evidence for or against the stated primary constraint.\n2. Note any pattern worth watching.\n3. Ask one sharp question that helps them see their reality more clearly.\n\nBe direct, brief (under 150 words), skip affirmations. Start with what the data actually shows.'; }
+  },
+  weekly: {
+    title: 'Weekly review',
+    meta: '10 minutes · Synthesize patterns, assess experiments, find the signal',
+    questions: [
+      { id: 'q1', label: 'What pattern repeated this week?', hint: 'Not what happened — what kept happening.' },
+      { id: 'q2', label: 'What did my experiment or adjustment reveal?', hint: 'Did last week\'s forward lean work? What did reality say back?' },
+      { id: 'q3', label: 'What evidence challenged my current story?', hint: 'Where did reality contradict what you assumed to be true?' },
+      { id: 'q4', label: 'What is reality asking me to pay attention to next?', hint: 'One signal that keeps showing up.' }
+    ],
+    aiPrompt: function(a, c) { return 'Reality calibration coach. Primary constraint: "' + (c || 'not set') + '"\n\nWeekly review:\n- Pattern that repeated: ' + a.q1 + '\n- Experiment result: ' + a.q2 + '\n- Evidence against current story: ' + a.q3 + '\n- Next signal: ' + a.q4 + '\n\nIdentify: (1) whether the primary constraint still appears to be the bottleneck, (2) the strongest emerging pattern, (3) one experiment for next week. Under 200 words. No affirmations.'; }
+  },
+  monthly: {
+    title: 'Monthly review',
+    meta: '20-30 minutes · Identify themes, map constraint evolution',
+    questions: [
+      { id: 'q1', label: 'What themes appeared most often this month?', hint: 'Look across your weekly reviews — what kept surfacing?' },
+      { id: 'q2', label: 'What constraint created the most friction?', hint: 'Be specific — what was the actual bottleneck, not just a symptom?' },
+      { id: 'q3', label: 'What improved? What deteriorated?', hint: 'Honest accounting of both directions.' },
+      { id: 'q4', label: 'What decision or direction became clearer?', hint: 'What do you know now that you did not at the start of the month?' }
+    ],
+    aiPrompt: function(a, c) { return 'Reality calibration coach. Primary constraint: "' + (c || 'not set') + '"\n\nMonthly review:\n- Recurring themes: ' + a.q1 + '\n- Main constraint: ' + a.q2 + '\n- Improved / deteriorated: ' + a.q3 + '\n- Clearer direction: ' + a.q4 + '\n\nDeliver: strongest pattern, constraint evolution (same/shifted/resolved), one experiment for next month. Flag contradictions between stated constraint and evidence. Under 250 words.'; }
+  },
+  quarterly: {
+    title: 'Quarterly review',
+    meta: '45-60 minutes · Assess direction and constraint evolution',
+    questions: [
+      { id: 'q1', label: 'What has reality consistently been teaching me?', hint: 'The lesson that kept repeating across all three months.' },
+      { id: 'q2', label: 'Which constraints disappeared? Which remain?', hint: 'Be honest about what actually moved and what did not.' },
+      { id: 'q3', label: 'What direction is emerging?', hint: 'Not what you want — what reality is actually pointing toward.' },
+      { id: 'q4', label: 'What should I stop, start, and continue?', hint: 'Three honest answers, no hedging.' }
+    ],
+    aiPrompt: function(a, c) { return 'Reality calibration coach. Primary constraint: "' + (c || 'not set') + '"\n\nQuarterly review:\n- Consistent lesson: ' + a.q1 + '\n- Constraint changes: ' + a.q2 + '\n- Emerging direction: ' + a.q3 + '\n- Stop/start/continue: ' + a.q4 + '\n\nProduce: constraint timeline assessment, emerging direction analysis, strategic experiment for next quarter. This is about direction, not behavior. Under 300 words.'; }
+  },
+  yearly: {
+    title: 'Yearly review',
+    meta: '60-90 minutes · The biographical review',
+    questions: [
+      { id: 'q1', label: 'What did I believe at the start of the year?', hint: 'The assumptions and stories you were operating from in January.' },
+      { id: 'q2', label: 'What did reality prove true? What did it prove false?', hint: 'Evidence in both directions, with specifics.' },
+      { id: 'q3', label: 'What patterns defined this year?', hint: 'The 2-3 themes that showed up in nearly every area of your life.' },
+      { id: 'q4', label: 'What changed in who you are becoming?', hint: 'Not what happened to you — how you changed.' },
+      { id: 'q5', label: 'What is next year\'s guiding experiment?', hint: 'One clear hypothesis you will test across the year.' }
+    ],
+    aiPrompt: function(a, c) { return 'Reality calibration coach. Primary constraint at year start: "' + (c || 'not set') + '"\n\nYearly review:\n- Starting beliefs: ' + a.q1 + '\n- Proved true/false: ' + a.q2 + '\n- Defining patterns: ' + a.q3 + '\n- Who you\'re becoming: ' + a.q4 + '\n- Next year\'s experiment: ' + a.q5 + '\n\nWrite a Year in Reality summary: biggest constraint removed, biggest remaining, three lessons reality repeated, how the narrative changed, guiding experiment for the coming year. Biographical weight. Under 400 words.'; }
+  }
+};
+
+var currentView = 'daily';
+var state = { constraint: '', entries: {} };
+var expandedAI = {};
+
+var AT_URL = 'https://api.airtable.com/v0/' + AIRTABLE_BASE + '/' + encodeURIComponent(AIRTABLE_TABLE);
+var AT_HEADS = { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN, 'Content-Type': 'application/json' };
+var AT_META = 'https://api.airtable.com/v0/meta/bases/' + AIRTABLE_BASE + '/tables';
+
+// ── ALL FIELDS needed in Airtable ───────────────────────
+var ALL_FIELDS = [
+  'Date','Cadence','Primary Constraint','AI Feedback','Record Type',
+  'What did reality show me today?','Where did I experience friction?','What am I watching or adjusting tomorrow?',
+  'What pattern repeated this week?','What did my experiment or adjustment reveal?','What evidence challenged my current story?','What is reality asking me to pay attention to next?',
+  'What themes appeared most often this month?','What constraint created the most friction?','What improved? What deteriorated?','What decision or direction became clearer?',
+  'What has reality consistently been teaching me?','Which constraints disappeared? Which remain?','What direction is emerging?','What should I stop, start, and continue?',
+  'What did I believe at the start of the year?','What did reality prove true? What did it prove false?','What patterns defined this year?','What changed in who you are becoming?','What is next year\'s guiding experiment?'
+];
+
+function showStatus(msg, color) {
+  var el = document.getElementById('main');
+  if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column;gap:12px;color:' + color + ';font-size:14px;text-align:center;padding:2rem;">' + msg + '</div>';
+}
+
+// ── AUTO-SETUP: create fields if missing ────────────────
+async function ensureFields() {
+  showStatus('<div class="dots"><span></span><span></span><span></span></div><div>Setting up your table...</div>', '#6b7280');
+  try {
+    var res = await fetch(AT_META, { headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN } });
+    var data = await res.json();
+    var table = (data.tables || []).find(function(t) { return t.name === AIRTABLE_TABLE; });
+    if (!table) { showStatus('Could not find the "Journey Log" table in Airtable.<br>Make sure it exists and your token has schema access.', '#ef4444'); return false; }
+    var existing = (table.fields || []).map(function(f) { return f.name; });
+    var missing = ALL_FIELDS.filter(function(f) { return f !== 'Name' && existing.indexOf(f) === -1; });
+    for (var i = 0; i < missing.length; i++) {
+      var fieldName = missing[i];
+      var fieldType = (fieldName === 'Date' || fieldName === 'Cadence' || fieldName === 'Record Type') ? 'singleLineText' : 'multilineText';
+      await fetch(AT_META + '/' + table.id + '/fields', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + AIRTABLE_TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fieldName, type: fieldType })
+      });
+    }
+    return true;
+  } catch(e) {
+    showStatus('Setup error: ' + e.message + '<br>Check your Airtable token has schema.bases:write permission.', '#ef4444');
+    return false;
+  }
+}
+
+// ── LOAD from Airtable on open ───────────────────────────
+async function loadFromAirtable() {
+  showStatus('<div class="dots"><span></span><span></span><span></span></div><div>Loading your entries...</div>', '#6b7280');
+  try {
+    var allRecords = [];
+    var offset = null;
+    do {
+      var url = AT_URL + '?pageSize=100';
+      if (offset) url += '&offset=' + offset;
+      var res = await fetch(url, { headers: AT_HEADS });
+      var data = await res.json();
+      if (data.error) { showStatus('Airtable error: ' + data.error.message + '<br>Check your token and base ID.', '#ef4444'); return; }
+      if (data.records) allRecords = allRecords.concat(data.records);
+      offset = data.offset || null;
+    } while (offset);
+
+    state.entries = {};
+    var foundConstraint = '';
+    allRecords.forEach(function(rec) {
+      var f = rec.fields;
+      if (f['Record Type'] === 'constraint') { if (f['Primary Constraint']) foundConstraint = f['Primary Constraint']; return; }
+      var cadence = (f['Cadence'] || 'Daily').toLowerCase();
+      if (!VIEWS[cadence]) return;
+      if (!state.entries[cadence]) state.entries[cadence] = [];
+      var answers = {};
+      VIEWS[cadence].questions.forEach(function(q) { answers[q.id] = f[q.label] || ''; });
+      state.entries[cadence].push({ id: rec.id, airtableId: rec.id, date: f['Date'] || '', answers: answers, ai: f['AI Feedback'] || null });
+      if (f['Primary Constraint'] && !foundConstraint) foundConstraint = f['Primary Constraint'];
+    });
+    Object.keys(state.entries).forEach(function(k) {
+      state.entries[k].sort(function(a,b){ return b.date < a.date ? -1 : 1; });
+    });
+    if (foundConstraint) state.constraint = foundConstraint;
+  } catch(e) { showStatus('Could not connect to Airtable.<br>Make sure you are on a hosted URL, not a local file.', '#ef4444'); return; }
+  render();
+}
+
+// ── SAVE new entry to Airtable ───────────────────────────
+async function saveToAirtable(entry, viewName) {
+  var fields = { 'Date': entry.date, 'Cadence': viewName.charAt(0).toUpperCase() + viewName.slice(1), 'Primary Constraint': state.constraint || '', 'AI Feedback': '', 'Record Type': 'entry' };
+  VIEWS[viewName].questions.forEach(function(q) { fields[q.label] = entry.answers[q.id] || ''; });
+  try {
+    var res = await fetch(AT_URL, { method: 'POST', headers: AT_HEADS, body: JSON.stringify({ fields: fields }) });
+    var data = await res.json();
+    if (data.error) { document.getElementById('save-status').textContent = 'Save failed: ' + data.error.message; document.getElementById('save-status').className = 'save-status error'; return; }
+    if (data.id) entry.airtableId = data.id;
+  } catch(e) { document.getElementById('save-status').textContent = 'Save failed — check connection'; document.getElementById('save-status').className = 'save-status error'; }
+}
+
+// ── SAVE constraint as its own record ───────────────────
+var constraintRecordId = null;
+async function saveConstraintToAirtable(value) {
+  try {
+    if (constraintRecordId) {
+      await fetch(AT_URL + '/' + constraintRecordId, { method: 'PATCH', headers: AT_HEADS, body: JSON.stringify({ fields: { 'Primary Constraint': value } }) });
+    } else {
+      var res = await fetch(AT_URL, { method: 'POST', headers: AT_HEADS, body: JSON.stringify({ fields: { 'Primary Constraint': value, 'Record Type': 'constraint', 'Cadence': 'constraint' } }) });
+      var data = await res.json();
+      if (data.id) constraintRecordId = data.id;
+    }
+  } catch(e) { console.error('Constraint save error:', e); }
+}
+
+// ── PATCH AI feedback back to Airtable ──────────────────
+async function patchAI(entry) {
+  if (!entry.airtableId) return;
+  try {
+    await fetch(AT_URL + '/' + entry.airtableId, { method: 'PATCH', headers: AT_HEADS, body: JSON.stringify({ fields: { 'AI Feedback': entry.ai || '' } }) });
+  } catch(e) { console.error('Patch error:', e); }
+}
+
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.toggle('active', el.dataset.view === v); });
+  render();
+}
+
+function getAnswers() {
+  var answers = {};
+  VIEWS[currentView].questions.forEach(function(q) { var el = document.getElementById('field-' + q.id); answers[q.id] = el ? el.value.trim() : ''; });
+  return answers;
+}
+
+async function submitEntry() {
+  var answers = getAnswers();
+  if (!Object.values(answers).some(function(v) { return v; })) return;
+  var btn = document.getElementById('submit-btn');
+  var status = document.getElementById('save-status');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  var entry = { id: Date.now(), airtableId: null, date: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }), answers: answers, ai: null };
+  if (!state.entries[currentView]) state.entries[currentView] = [];
+  state.entries[currentView].unshift(entry);
+  await saveToAirtable(entry, currentView);
+  btn.textContent = 'Save entry'; btn.disabled = false;
+  status.textContent = 'Saved'; status.className = 'save-status success';
+  expandedAI[entry.id] = true;
+  render();
+  await fetchAI(entry.id, currentView);
+}
+
+async function fetchAI(entryId, viewName) {
+  var entries = state.entries[viewName] || [];
+  var entry = entries.find(function(e) { return e.id == entryId; });
+  if (!entry) return;
+  var prompt = VIEWS[viewName].aiPrompt(entry.answers, state.constraint);
+  var aiEl = document.getElementById('ai-body-' + entryId);
+  if (aiEl) aiEl.innerHTML = '<div class="ai-loading"><div class="dots"><span></span><span></span><span></span></div> Reading your entry...</div>';
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    var data = await res.json();
+    var text = data.content ? data.content.map(function(b){ return b.text||''; }).join('') : 'No response.';
+    entry.ai = text;
+    await patchAI(entry);
+    if (aiEl) { aiEl.className = 'ai-body'; aiEl.textContent = text; }
+  } catch(e) {
+    if (aiEl) { aiEl.className = 'ai-body'; aiEl.textContent = 'Could not reach AI. Entry is saved to Airtable. Check your API key.'; }
+  }
+}
+
+function toggleAI(entryId) { expandedAI[entryId] = !expandedAI[entryId]; render(); }
+function openModal() { document.getElementById('modal-input').value = state.constraint || ''; document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+async function saveConstraint() { state.constraint = document.getElementById('modal-input').value.trim(); closeModal(); render(); await saveConstraintToAirtable(state.constraint); }
+
+function render() {
+  var view = VIEWS[currentView];
+  var entries = state.entries[currentView] || [];
+  var html = '<div class="constraint-bar"><span class="constraint-label">Constraint</span><span class="constraint-text' + (state.constraint ? ' set' : '') + '">' + (state.constraint || 'Not set — add your primary constraint from your Reality Assessment') + '</span><button class="constraint-btn" onclick="openModal()">Edit</button></div>';
+  html += '<div class="view-header"><div class="view-title">' + view.title + '</div><div class="view-meta">' + view.meta + '</div></div>';
+  html += '<div class="entry-form">';
+  view.questions.forEach(function(q) {
+    html += '<div class="form-q"><label class="q-label" for="field-' + q.id + '">' + q.label + '</label><div class="q-hint">' + q.hint + '</div><textarea id="field-' + q.id + '" placeholder="..." rows="2"></textarea></div>';
+  });
+  html += '<div class="form-footer"><button class="btn-save" id="submit-btn" onclick="submitEntry()">Save entry</button><span class="save-status" id="save-status"></span></div></div>';
+  if (entries.length > 0) {
+    html += '<div class="entries-section"><div class="entries-label">Past entries</div>';
+    entries.forEach(function(entry) {
+      var showAI = expandedAI[entry.id];
+      html += '<div class="entry-card"><div class="entry-top"><span class="entry-date">' + entry.date + '</span>';
+      if (entry.ai) html += '<button class="entry-ai-toggle" onclick="toggleAI(\'' + entry.id + '\')">' + (showAI ? 'Hide feedback' : 'Show AI feedback') + '</button>';
+      html += '</div>';
+      view.questions.forEach(function(q) {
+        html += '<div class="entry-qa"><div class="entry-q">' + q.label + '</div><div class="entry-a">' + (entry.answers[q.id] || '—') + '</div></div>';
+      });
+      if (showAI && entry.ai) {
+        html += '<div class="ai-panel"><div class="ai-header"><span style="font-size:14px;color:#C9873A">✦</span><span class="ai-label">AI feedback</span></div><div class="ai-body" id="ai-body-' + entry.id + '">' + entry.ai + '</div></div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="empty"><div class="empty-icon">◎</div><div class="empty-text">No entries yet — your first one takes 2 minutes.</div></div>';
+  }
+  document.getElementById('main').innerHTML = html;
+}
+
+async function init() { var ok = await ensureFields(); if (ok) await loadFromAirtable(); }
+init();
+</script>
+</body>
+</html>
